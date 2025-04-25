@@ -6,9 +6,10 @@ interface CheckerBoardProps {
   gameState: string;
   onMove: (from: number, to: number) => void;
   currentPlayer: 'white' | 'purple';
+  controllingPlayer: 'white' | 'purple';
 }
 
-const CheckerBoard: React.FC<CheckerBoardProps> = ({ gameState, onMove, currentPlayer }) => {
+const CheckerBoard: React.FC<CheckerBoardProps> = ({ gameState, onMove, currentPlayer, controllingPlayer }) => {
   const [selectedPiece, setSelectedPiece] = React.useState<number | null>(null);
   const [validMoves, setValidMoves] = React.useState<number[]>([]);
   
@@ -87,17 +88,38 @@ const CheckerBoard: React.FC<CheckerBoardProps> = ({ gameState, onMove, currentP
     const isSelectedPiece = selectedPiece === position;
     const isValidMove = validMoves.includes(position);
     
+    // Check if this is the current player's piece
+    const isCurrentPlayerPiece = 
+      (piece === 'w' && currentPlayer === 'white') || 
+      (piece === 'p' && currentPlayer === 'purple');
+    
+    // Check if this is the controlling player's piece
+    const isControllingPlayerPiece = 
+      (piece === 'w' && controllingPlayer === 'white') || 
+      (piece === 'p' && controllingPlayer === 'purple');
+    
+    const canSelectPiece = isCurrentPlayerPiece && isControllingPlayerPiece;
+    
     const handleClick = () => {
+      // Check if it's not the controlling player's turn
+      if (currentPlayer !== controllingPlayer && piece !== '.') {
+        toast({
+          title: "Not Your Turn",
+          description: `You are playing as ${controllingPlayer}. It's ${currentPlayer}'s turn.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
       if (selectedPiece === null) {
         // Selecting a piece
         if (piece !== '.') {
-          if ((currentPlayer === 'white' && piece === 'w') ||
-              (currentPlayer === 'purple' && piece === 'p')) {
+          if (canSelectPiece) {
             setSelectedPiece(position);
           } else {
             toast({
-              title: "Wrong Turn",
-              description: `It's ${currentPlayer}'s turn to move.`,
+              title: "Wrong Piece",
+              description: `You can only move your ${controllingPlayer} pieces when it's your turn.`,
               variant: "destructive"
             });
           }
@@ -112,8 +134,7 @@ const CheckerBoard: React.FC<CheckerBoardProps> = ({ gameState, onMove, currentP
           setSelectedPiece(null);
         } else if (piece !== '.') {
           // Clicked on another piece
-          if ((currentPlayer === 'white' && piece === 'w') ||
-              (currentPlayer === 'purple' && piece === 'p')) {
+          if (canSelectPiece) {
             setSelectedPiece(position);
           } else {
             toast({

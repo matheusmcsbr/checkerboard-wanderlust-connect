@@ -19,11 +19,14 @@ const Game = () => {
   const navigate = useNavigate();
   const [gameState, setGameState] = useState(INITIAL_BOARD);
   const [currentPlayer, setCurrentPlayer] = useState<'white' | 'purple'>('white');
+  // Track which player the current user is controlling
+  const [controllingPlayer, setControllingPlayer] = useState<'white' | 'purple' | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const state = params.get('state');
     const player = params.get('player');
+    const role = params.get('role');
     
     if (state && state.length === 64 && /^[pw.]{64}$/.test(state)) {
       setGameState(state);
@@ -32,9 +35,27 @@ const Game = () => {
     if (player === 'white' || player === 'purple') {
       setCurrentPlayer(player);
     }
+
+    // Set controlling player based on URL or start as the initial player
+    if (role === 'white' || role === 'purple') {
+      setControllingPlayer(role);
+    } else if (!controllingPlayer) {
+      // If no role is specified in URL, first visitor gets white
+      setControllingPlayer('white');
+    }
   }, [location.search]);
 
   const handleMove = (from: number, to: number) => {
+    // Only allow moves if it's the controlling player's turn
+    if (controllingPlayer !== currentPlayer) {
+      toast({
+        title: "Not Your Turn",
+        description: `You are playing as ${controllingPlayer}. It's ${currentPlayer}'s turn.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Get positions
     const fromRow = Math.floor(from / 8);
     const fromCol = from % 8;
@@ -176,19 +197,41 @@ const Game = () => {
     const params = new URLSearchParams();
     params.set('state', newGameState);
     params.set('player', currentPlayer === 'white' ? 'purple' : 'white');
+    params.set('role', controllingPlayer || 'white');
     navigate(`?${params.toString()}`, { replace: true });
   };
 
-  const gameUrl = window.location.href;
+  // Generate shareable URL for the opponent
+  const getOpponentUrl = () => {
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    
+    // Set the current game state
+    params.set('state', gameState);
+    
+    // Set the current player's turn
+    params.set('player', currentPlayer);
+    
+    // Set the opponent's role (opposite of current player)
+    params.set('role', controllingPlayer === 'white' ? 'purple' : 'white');
+    
+    url.search = params.toString();
+    return url.toString();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <h1 className="text-4xl font-bold mb-8 text-gray-800">Checkers Game</h1>
-      <GameStatus currentPlayer={currentPlayer} gameUrl={gameUrl} />
+      <GameStatus 
+        currentPlayer={currentPlayer} 
+        gameUrl={getOpponentUrl()} 
+        controllingPlayer={controllingPlayer || 'white'}
+      />
       <CheckerBoard
         gameState={gameState}
         onMove={handleMove}
         currentPlayer={currentPlayer}
+        controllingPlayer={controllingPlayer || 'white'}
       />
       <div className="mt-8 text-sm text-gray-600">
         <h3 className="font-semibold mb-1">How to play:</h3>
