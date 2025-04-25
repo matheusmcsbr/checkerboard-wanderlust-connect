@@ -27,16 +27,22 @@ export const useGameState = () => {
   const [currentPlayer, setCurrentPlayer] = useState<Player>('white');
   const [controllingPlayer, setControllingPlayer] = useState<Player | null>(null);
 
-  // Add polling for game state changes
+  // Add polling for game state changes for both players
   const { data: newGameState } = useQuery({
     queryKey: ['gameState', location.search],
     queryFn: () => fetchGameState(gameState),
     refetchInterval: (data) => {
-      // Only poll if you're the purple player and it's not your turn
+      // Poll if it's not your turn (either player)
       const params = new URLSearchParams(location.search);
       const role = params.get('role');
-      const player = params.get('player');
-      return (role === 'purple' && player === 'purple' && currentPlayer === 'white') ? 1000 : false;
+      
+      // White player polls when it's white's turn but purple is playing
+      const whitePolling = role === 'white' && currentPlayer === 'purple';
+      
+      // Purple player polls when it's purple's turn but white is playing
+      const purplePolling = role === 'purple' && currentPlayer === 'white';
+      
+      return (whitePolling || purplePolling) ? 1000 : false;
     }
   });
 
