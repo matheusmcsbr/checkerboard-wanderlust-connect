@@ -6,11 +6,24 @@ interface CheckerBoardProps {
   gameState: string;
   onMove: (from: number, to: number) => void;
   currentPlayer: 'white' | 'purple';
+  multipleCapturePiecePosition?: number | null;
 }
 
-const CheckerBoard: React.FC<CheckerBoardProps> = ({ gameState, onMove, currentPlayer }) => {
+const CheckerBoard: React.FC<CheckerBoardProps> = ({ 
+  gameState, 
+  onMove, 
+  currentPlayer,
+  multipleCapturePiecePosition = null 
+}) => {
   const [selectedPiece, setSelectedPiece] = React.useState<number | null>(null);
   const [validMoves, setValidMoves] = React.useState<number[]>([]);
+  
+  // If there's a piece that must continue multiple captures, select it automatically
+  React.useEffect(() => {
+    if (multipleCapturePiecePosition !== null) {
+      setSelectedPiece(multipleCapturePiecePosition);
+    }
+  }, [multipleCapturePiecePosition]);
   
   // Calculate valid moves for the selected piece
   React.useEffect(() => {
@@ -33,50 +46,79 @@ const CheckerBoard: React.FC<CheckerBoardProps> = ({ gameState, onMove, currentP
       return gameState[r * 8 + c];
     };
     
-    // For white pieces (moving upward)
-    if (piece === 'w') {
-      // Check regular moves (diagonally up)
-      if (isOnBoard(row - 1, col - 1) && getPiece(row - 1, col - 1) === '.') {
-        possibleMoves.push((row - 1) * 8 + (col - 1));
-      }
-      if (isOnBoard(row - 1, col + 1) && getPiece(row - 1, col + 1) === '.') {
-        possibleMoves.push((row - 1) * 8 + (col + 1));
-      }
-      
-      // Check capture moves
-      if (isOnBoard(row - 1, col - 1) && getPiece(row - 1, col - 1) === 'p' && 
-          isOnBoard(row - 2, col - 2) && getPiece(row - 2, col - 2) === '.') {
-        possibleMoves.push((row - 2) * 8 + (col - 2));
-      }
-      if (isOnBoard(row - 1, col + 1) && getPiece(row - 1, col + 1) === 'p' && 
-          isOnBoard(row - 2, col + 2) && getPiece(row - 2, col + 2) === '.') {
-        possibleMoves.push((row - 2) * 8 + (col + 2));
-      }
-    }
-    
-    // For purple pieces (moving downward)
-    if (piece === 'p') {
-      // Check regular moves (diagonally down)
-      if (isOnBoard(row + 1, col - 1) && getPiece(row + 1, col - 1) === '.') {
-        possibleMoves.push((row + 1) * 8 + (col - 1));
-      }
-      if (isOnBoard(row + 1, col + 1) && getPiece(row + 1, col + 1) === '.') {
-        possibleMoves.push((row + 1) * 8 + (col + 1));
+    // If we're in a multiple capture sequence, only check for capture moves
+    if (multipleCapturePiecePosition !== null) {
+      // For white pieces (moving upward)
+      if (piece === 'w') {
+        // Check capture moves only
+        if (isOnBoard(row - 1, col - 1) && getPiece(row - 1, col - 1) === 'p' && 
+            isOnBoard(row - 2, col - 2) && getPiece(row - 2, col - 2) === '.') {
+          possibleMoves.push((row - 2) * 8 + (col - 2));
+        }
+        if (isOnBoard(row - 1, col + 1) && getPiece(row - 1, col + 1) === 'p' && 
+            isOnBoard(row - 2, col + 2) && getPiece(row - 2, col + 2) === '.') {
+          possibleMoves.push((row - 2) * 8 + (col + 2));
+        }
       }
       
-      // Check capture moves
-      if (isOnBoard(row + 1, col - 1) && getPiece(row + 1, col - 1) === 'w' && 
-          isOnBoard(row + 2, col - 2) && getPiece(row + 2, col - 2) === '.') {
-        possibleMoves.push((row + 2) * 8 + (col - 2));
+      // For purple pieces (moving downward)
+      if (piece === 'p') {
+        // Check capture moves only
+        if (isOnBoard(row + 1, col - 1) && getPiece(row + 1, col - 1) === 'w' && 
+            isOnBoard(row + 2, col - 2) && getPiece(row + 2, col - 2) === '.') {
+          possibleMoves.push((row + 2) * 8 + (col - 2));
+        }
+        if (isOnBoard(row + 1, col + 1) && getPiece(row + 1, col + 1) === 'w' && 
+            isOnBoard(row + 2, col + 2) && getPiece(row + 2, col + 2) === '.') {
+          possibleMoves.push((row + 2) * 8 + (col + 2));
+        }
       }
-      if (isOnBoard(row + 1, col + 1) && getPiece(row + 1, col + 1) === 'w' && 
-          isOnBoard(row + 2, col + 2) && getPiece(row + 2, col + 2) === '.') {
-        possibleMoves.push((row + 2) * 8 + (col + 2));
+    } else {
+      // For white pieces (moving upward)
+      if (piece === 'w') {
+        // Check regular moves (diagonally up)
+        if (isOnBoard(row - 1, col - 1) && getPiece(row - 1, col - 1) === '.') {
+          possibleMoves.push((row - 1) * 8 + (col - 1));
+        }
+        if (isOnBoard(row - 1, col + 1) && getPiece(row - 1, col + 1) === '.') {
+          possibleMoves.push((row - 1) * 8 + (col + 1));
+        }
+        
+        // Check capture moves
+        if (isOnBoard(row - 1, col - 1) && getPiece(row - 1, col - 1) === 'p' && 
+            isOnBoard(row - 2, col - 2) && getPiece(row - 2, col - 2) === '.') {
+          possibleMoves.push((row - 2) * 8 + (col - 2));
+        }
+        if (isOnBoard(row - 1, col + 1) && getPiece(row - 1, col + 1) === 'p' && 
+            isOnBoard(row - 2, col + 2) && getPiece(row - 2, col + 2) === '.') {
+          possibleMoves.push((row - 2) * 8 + (col + 2));
+        }
+      }
+      
+      // For purple pieces (moving downward)
+      if (piece === 'p') {
+        // Check regular moves (diagonally down)
+        if (isOnBoard(row + 1, col - 1) && getPiece(row + 1, col - 1) === '.') {
+          possibleMoves.push((row + 1) * 8 + (col - 1));
+        }
+        if (isOnBoard(row + 1, col + 1) && getPiece(row + 1, col + 1) === '.') {
+          possibleMoves.push((row + 1) * 8 + (col + 1));
+        }
+        
+        // Check capture moves
+        if (isOnBoard(row + 1, col - 1) && getPiece(row + 1, col - 1) === 'w' && 
+            isOnBoard(row + 2, col - 2) && getPiece(row + 2, col - 2) === '.') {
+          possibleMoves.push((row + 2) * 8 + (col - 2));
+        }
+        if (isOnBoard(row + 1, col + 1) && getPiece(row + 1, col + 1) === 'w' && 
+            isOnBoard(row + 2, col + 2) && getPiece(row + 2, col + 2) === '.') {
+          possibleMoves.push((row + 2) * 8 + (col + 2));
+        }
       }
     }
     
     setValidMoves(possibleMoves);
-  }, [selectedPiece, gameState]);
+  }, [selectedPiece, gameState, multipleCapturePiecePosition]);
   
   const renderSquare = (position: number) => {
     const row = Math.floor(position / 8);
@@ -86,6 +128,8 @@ const CheckerBoard: React.FC<CheckerBoardProps> = ({ gameState, onMove, currentP
     
     const isSelectedPiece = selectedPiece === position;
     const isValidMove = validMoves.includes(position);
+    const isMultiCaptureActive = multipleCapturePiecePosition !== null;
+    const mustContinueCaptureWithThisPiece = position === multipleCapturePiecePosition;
     
     // Check if this is the current player's piece
     const isCurrentPlayerPiece = 
@@ -93,6 +137,25 @@ const CheckerBoard: React.FC<CheckerBoardProps> = ({ gameState, onMove, currentP
       (piece === 'p' && currentPlayer === 'purple');
     
     const handleClick = () => {
+      // If we're in a multiple capture sequence, only the active piece can be selected
+      if (isMultiCaptureActive) {
+        if (position === multipleCapturePiecePosition) {
+          // Toggle selection of the active piece
+          setSelectedPiece(isSelectedPiece ? null : position);
+        } else if (isValidMove) {
+          // Attempt to make the next capture move
+          onMove(multipleCapturePiecePosition, position);
+        } else {
+          toast({
+            title: "Multiple Capture in Progress",
+            description: "You must continue capturing with the highlighted piece.",
+            variant: "destructive"
+          });
+        }
+        return;
+      }
+      
+      // Regular piece selection logic
       if (selectedPiece === null) {
         // Selecting a piece
         if (piece !== '.') {
@@ -143,12 +206,14 @@ const CheckerBoard: React.FC<CheckerBoardProps> = ({ gameState, onMove, currentP
           ${isDark ? 'bg-[#1A1F2C]' : 'bg-[#F1F0FB]'}
           ${isSelectedPiece ? 'ring-2 ring-blue-500' : ''}
           ${isValidMove ? 'ring-2 ring-green-500 cursor-pointer' : ''}
-          ${isValidMove && !isSelectedPiece ? 'bg-green-100' : ''}`}
+          ${isValidMove && !isSelectedPiece ? 'bg-green-100' : ''}
+          ${mustContinueCaptureWithThisPiece ? 'ring-4 ring-yellow-400' : ''}`}
       >
         {piece !== '.' && (
           <div className={`w-8 h-8 rounded-full shadow-lg transition-transform
             ${piece === 'w' ? 'bg-white border-2 border-gray-200' : 'bg-[#8B5CF6]'}
-            ${isSelectedPiece ? 'transform scale-110' : ''}`}
+            ${isSelectedPiece ? 'transform scale-110' : ''}
+            ${mustContinueCaptureWithThisPiece ? 'animate-pulse' : ''}`}
           />
         )}
         {isValidMove && piece === '.' && (

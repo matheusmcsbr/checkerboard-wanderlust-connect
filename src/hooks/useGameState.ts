@@ -106,9 +106,6 @@ export const useGameState = () => {
     if (role === 'white' || role === 'purple') {
       console.log("Controlling player set from URL:", role);
       setControllingPlayer(role);
-    } else if (!controllingPlayer) {
-      console.log("Default controlling player set to white");
-      setControllingPlayer('white');
     }
   }, []);
 
@@ -179,13 +176,19 @@ export const useGameState = () => {
   }, [gameId, gameState]);
 
   // Update game state and sync between players
-  const updateGameState = (newGameState: string) => {
+  const updateGameState = (newGameState: string, continueTurn: boolean = false) => {
     console.log("Updating game state to:", newGameState);
     setGameState(newGameState);
     
-    const nextPlayer = currentPlayer === 'white' ? 'purple' : 'white';
-    console.log("Toggling current player to:", nextPlayer);
-    setCurrentPlayer(nextPlayer);
+    // Only toggle player if not continuing the same turn
+    let nextPlayer = currentPlayer;
+    if (!continueTurn) {
+      nextPlayer = currentPlayer === 'white' ? 'purple' : 'white';
+      console.log("Toggling current player to:", nextPlayer);
+      setCurrentPlayer(nextPlayer);
+    } else {
+      console.log("Continuing turn for player:", currentPlayer);
+    }
     
     // Store the updated game state in localStorage for syncing
     localStorage.setItem(`game_state_${gameId}`, newGameState);

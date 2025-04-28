@@ -9,7 +9,11 @@ import { RefreshCw } from 'lucide-react';
 
 const Game = () => {
   const { gameState, currentPlayer, gameId, updateGameState } = useGameState();
-  const { handleMove } = useGameMoves({ gameState, currentPlayer, updateGameState });
+  const { handleMove, multipleCapturePiecePosition } = useGameMoves({ 
+    gameState, 
+    currentPlayer, 
+    updateGameState 
+  });
 
   const handleReset = () => {
     const initialState = 'p.p.p.p..p.p.p.pp.p.p.p...............w.w.w.w.w.w.w.w..w.w.w.w';
@@ -21,7 +25,10 @@ const Game = () => {
       <h1 className="text-4xl font-bold mb-8 text-gray-800">Checkers Game</h1>
       
       <div className="flex items-center gap-4 mb-8">
-        <GameStatus currentPlayer={currentPlayer} />
+        <GameStatus 
+          currentPlayer={currentPlayer} 
+          isMultipleCapture={multipleCapturePiecePosition !== null} 
+        />
         <Button
           onClick={handleReset}
           variant="outline"
@@ -37,6 +44,7 @@ const Game = () => {
         gameState={gameState}
         onMove={handleMove}
         currentPlayer={currentPlayer}
+        multipleCapturePiecePosition={multipleCapturePiecePosition}
       />
     </div>
   );
