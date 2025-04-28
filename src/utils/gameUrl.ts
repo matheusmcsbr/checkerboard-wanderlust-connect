@@ -7,7 +7,8 @@ export const getOpponentUrl = (
   controllingPlayer: Player | null
 ) => {
   // Create a new URL based on the current window location
-  const url = new URL(window.location.href);
+  const baseUrl = window.location.origin + window.location.pathname;
+  const url = new URL(baseUrl);
   const params = new URLSearchParams();
   
   // Always set the latest game state
@@ -21,5 +22,6 @@ export const getOpponentUrl = (
   
   // Replace the URL search parameters
   url.search = params.toString();
+  console.log("Generated opponent URL:", url.toString());
   return url.toString();
 };
