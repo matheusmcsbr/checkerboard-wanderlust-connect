@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -31,28 +30,27 @@ export const useGameState = () => {
   const { data: newGameState } = useQuery({
     queryKey: ['gameState', location.search],
     queryFn: () => fetchGameState(gameState),
-    refetchInterval: (data) => {
-      // Poll if it's not your turn (either player)
-      const params = new URLSearchParams(location.search);
-      const role = params.get('role');
-      
-      // White player polls when it's white's turn but purple is playing
-      const whitePolling = role === 'white' && currentPlayer === 'purple';
-      
-      // Purple player polls when it's purple's turn but white is playing
-      const purplePolling = role === 'purple' && currentPlayer === 'white';
-      
-      return (whitePolling || purplePolling) ? 1000 : false;
-    }
+    refetchInterval: 1000, // Poll every second regardless of whose turn it is
+    refetchOnWindowFocus: true
   });
 
   useEffect(() => {
     if (newGameState && newGameState !== gameState) {
       setGameState(newGameState);
-      // Switch turns if the game state has changed
-      setCurrentPlayer(currentPlayer === 'white' ? 'purple' : 'white');
+      
+      // Extract player from URL to determine current turn
+      const params = new URLSearchParams(location.search);
+      const playerParam = params.get('player');
+      
+      // If URL has player param, use it to set current player
+      if (playerParam === 'white' || playerParam === 'purple') {
+        setCurrentPlayer(playerParam);
+      } else {
+        // Otherwise toggle based on previous state
+        setCurrentPlayer(currentPlayer === 'white' ? 'purple' : 'white');
+      }
     }
-  }, [newGameState]);
+  }, [newGameState, location.search]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -79,10 +77,15 @@ export const useGameState = () => {
     setGameState(newGameState);
     setCurrentPlayer(currentPlayer === 'white' ? 'purple' : 'white');
     
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(location.search);
     params.set('state', newGameState);
     params.set('player', currentPlayer === 'white' ? 'purple' : 'white');
-    params.set('role', controllingPlayer || 'white');
+    
+    // Preserve the role parameter when updating game state
+    if (controllingPlayer) {
+      params.set('role', controllingPlayer);
+    }
+    
     navigate(`?${params.toString()}`, { replace: true });
   };
 
