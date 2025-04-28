@@ -5,26 +5,15 @@ import { Player } from "./useGameState";
 interface UseGameMovesProps {
   gameState: string;
   currentPlayer: Player;
-  controllingPlayer: Player | null;
   updateGameState: (newGameState: string) => void;
 }
 
 export const useGameMoves = ({
   gameState,
   currentPlayer,
-  controllingPlayer,
   updateGameState
 }: UseGameMovesProps) => {
   const handleMove = (from: number, to: number) => {
-    if (controllingPlayer !== currentPlayer) {
-      toast({
-        title: "Not Your Turn",
-        description: `You are playing as ${controllingPlayer}. It's ${currentPlayer}'s turn.`,
-        variant: "destructive"
-      });
-      return;
-    }
-
     const fromRow = Math.floor(from / 8);
     const fromCol = from % 8;
     const toRow = Math.floor(to / 8);
@@ -34,6 +23,16 @@ export const useGameMoves = ({
     const isWhite = currentPiece === 'w';
     const isPurple = currentPiece === 'p';
     const targetSquare = gameState[to];
+    
+    // Check if piece belongs to current player
+    if ((isWhite && currentPlayer !== 'white') || (isPurple && currentPlayer !== 'purple')) {
+      toast({
+        title: "Not Your Turn",
+        description: `It's ${currentPlayer}'s turn. You can only move ${currentPlayer} pieces.`,
+        variant: "destructive"
+      });
+      return;
+    }
     
     if (targetSquare !== '.') {
       toast({

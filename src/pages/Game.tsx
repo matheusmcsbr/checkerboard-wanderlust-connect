@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
 const Game = () => {
-  const { gameState, currentPlayer, controllingPlayer, gameId, updateGameState } = useGameState();
-  const { handleMove } = useGameMoves({ gameState, currentPlayer, controllingPlayer, updateGameState });
+  const { gameState, currentPlayer, gameId, updateGameState } = useGameState();
+  const { handleMove } = useGameMoves({ gameState, currentPlayer, updateGameState });
 
   const handleReset = () => {
     const initialState = 'p.p.p.p..p.p.p.pp.p.p.p...............w.w.w.w.w.w.w.w..w.w.w.w';
@@ -21,10 +21,7 @@ const Game = () => {
       <h1 className="text-4xl font-bold mb-8 text-gray-800">Checkers Game</h1>
       
       <div className="flex items-center gap-4 mb-8">
-        <GameStatus 
-          currentPlayer={currentPlayer} 
-          controllingPlayer={controllingPlayer || 'white'}
-        />
+        <GameStatus currentPlayer={currentPlayer} />
         <Button
           onClick={handleReset}
           variant="outline"
@@ -40,7 +37,6 @@ const Game = () => {
         gameState={gameState}
         onMove={handleMove}
         currentPlayer={currentPlayer}
-        controllingPlayer={controllingPlayer || 'white'}
       />
     </div>
   );

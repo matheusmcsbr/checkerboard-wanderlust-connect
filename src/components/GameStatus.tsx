@@ -3,7 +3,6 @@ import React from 'react';
 
 interface GameStatusProps {
   currentPlayer: 'white' | 'purple';
-  controllingPlayer: 'white' | 'purple';
 }
 
 const GameStatus: React.FC<GameStatusProps> = ({ currentPlayer }) => {
