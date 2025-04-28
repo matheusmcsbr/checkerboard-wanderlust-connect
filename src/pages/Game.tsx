@@ -5,7 +5,7 @@ import GameStatus from '../components/GameStatus';
 import { useGameState } from '../hooks/useGameState';
 import { useGameMoves } from '../hooks/useGameMoves';
 import { Button } from '@/components/ui/button';
-import { Reset } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 const Game = () => {
   const { gameState, currentPlayer, controllingPlayer, gameId, updateGameState } = useGameState();
@@ -31,7 +31,7 @@ const Game = () => {
           size="sm"
           className="flex items-center gap-2"
         >
-          <Reset size={16} />
+          <RefreshCw size={16} />
           Reset Game
         </Button>
       </div>
