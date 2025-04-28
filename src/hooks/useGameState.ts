@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -36,24 +37,26 @@ const fetchGameState = async () => {
   const gameId = params.get('gameId') || getGameId();
   
   // Check localStorage for the most recent state for this game ID
-  const storedState = localStorage.getItem(`game_state_${gameId}`);
+  const storageKey = `game_state_${gameId}`;
+  const storedState = localStorage.getItem(storageKey);
   
   // Use the URL state parameter if available and valid
   if (stateParam && stateParam.length === 64 && /^[pw.]{64}$/.test(stateParam)) {
+    console.log("Found valid state in URL:", stateParam);
     // Store the state in localStorage for future retrieval
-    localStorage.setItem(`game_state_${gameId}`, stateParam);
-    console.log("Fetched game state from URL:", stateParam);
+    localStorage.setItem(storageKey, stateParam);
     return stateParam;
   }
   
   // Otherwise use the stored state if available
   if (storedState && storedState.length === 64 && /^[pw.]{64}$/.test(storedState)) {
-    console.log("Fetched game state from localStorage:", storedState);
+    console.log("Using state from localStorage:", storedState);
     return storedState;
   }
   
-  // Fall back to null if no valid state is found
-  return null;
+  console.log("No valid state found, using initial board");
+  // Fall back to initial board if no valid state is found
+  return INITIAL_BOARD;
 };
 
 export const useGameState = () => {
@@ -68,16 +71,55 @@ export const useGameState = () => {
   const { data: newGameState } = useQuery({
     queryKey: ['gameState', location.search, gameId],
     queryFn: fetchGameState,
-    refetchInterval: 250, // Poll very frequently to ensure quick synchronization
+    refetchInterval: 100, // Poll very frequently to ensure quick synchronization
     refetchOnWindowFocus: true,
     staleTime: 0
   });
+
+  // Initialize game state from URL on first load
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const state = params.get('state');
+    const player = params.get('player');
+    const role = params.get('role');
+    const urlGameId = params.get('gameId');
+    
+    // Set game ID from URL or use/create localStorage one
+    if (urlGameId) {
+      setGameId(urlGameId);
+      localStorage.setItem('checkers_game_id', urlGameId);
+      console.log("Setting game ID from URL:", urlGameId);
+    }
+    
+    if (state && state.length === 64 && /^[pw.]{64}$/.test(state)) {
+      console.log("Initial game state set from URL:", state);
+      setGameState(state);
+      // Store in localStorage for sync
+      localStorage.setItem(`game_state_${gameId}`, state);
+    }
+    
+    if (player === 'white' || player === 'purple') {
+      console.log("Initial current player set from URL:", player);
+      setCurrentPlayer(player);
+    }
+
+    if (role === 'white' || role === 'purple') {
+      console.log("Controlling player set from URL:", role);
+      setControllingPlayer(role);
+    } else if (!controllingPlayer) {
+      console.log("Default controlling player set to white");
+      setControllingPlayer('white');
+    }
+  }, []);
 
   // Handle game state updates from URL or localStorage
   useEffect(() => {
     if (newGameState && newGameState !== gameState) {
       console.log("Game state updated from:", gameState, "to:", newGameState);
       setGameState(newGameState);
+      
+      // Make sure the game state is saved in localStorage for other tabs/windows
+      localStorage.setItem(`game_state_${gameId}`, newGameState);
       
       const params = new URLSearchParams(location.search);
       const playerParam = params.get('player');
@@ -116,42 +158,25 @@ export const useGameState = () => {
         console.log("Current player determined by game state:", nextPlayer);
       }
     }
-  }, [newGameState, location.search, gameState, currentPlayer]);
+  }, [newGameState, location.search, gameId]);
 
-  // Initialize game state from URL on first load
+  // Listen for storage events (for cross-tab communication)
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const state = params.get('state');
-    const player = params.get('player');
-    const role = params.get('role');
-    const urlGameId = params.get('gameId');
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === `game_state_${gameId}` && event.newValue) {
+        console.log("Storage event detected with new game state:", event.newValue);
+        if (event.newValue !== gameState && event.newValue.length === 64) {
+          console.log("Updating game state from storage event");
+          setGameState(event.newValue);
+        }
+      }
+    };
     
-    // Set game ID from URL or use/create localStorage one
-    if (urlGameId) {
-      setGameId(urlGameId);
-      localStorage.setItem('checkers_game_id', urlGameId);
-    }
-    
-    if (state && state.length === 64 && /^[pw.]{64}$/.test(state)) {
-      console.log("Initial game state set from URL:", state);
-      setGameState(state);
-      // Store in localStorage for sync
-      localStorage.setItem(`game_state_${gameId}`, state);
-    }
-    
-    if (player === 'white' || player === 'purple') {
-      console.log("Initial current player set from URL:", player);
-      setCurrentPlayer(player);
-    }
-
-    if (role === 'white' || role === 'purple') {
-      console.log("Controlling player set from URL:", role);
-      setControllingPlayer(role);
-    } else if (!controllingPlayer) {
-      console.log("Default controlling player set to white");
-      setControllingPlayer('white');
-    }
-  }, []);
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [gameId, gameState]);
 
   // Update game state and sync between players
   const updateGameState = (newGameState: string) => {
@@ -166,7 +191,7 @@ export const useGameState = () => {
     localStorage.setItem(`game_state_${gameId}`, newGameState);
     
     // Update the URL params
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(location.search);
     params.set('state', newGameState);
     params.set('player', nextPlayer);
     params.set('gameId', gameId);

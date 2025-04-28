@@ -18,7 +18,7 @@ export const getOpponentUrl = (
   // Set the current player's turn
   params.set('player', currentPlayer);
   
-  // Set the role for the opponent
+  // Set the role for the opponent (opposite of controlling player)
   params.set('role', controllingPlayer === 'white' ? 'purple' : 'white');
   
   // Include the game ID for synchronization
