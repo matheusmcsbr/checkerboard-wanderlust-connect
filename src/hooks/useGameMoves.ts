@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/use-toast";
 import { Player } from "./useGameState";
 import { useState } from "react";
@@ -6,7 +5,7 @@ import { useState } from "react";
 interface UseGameMovesProps {
   gameState: string;
   currentPlayer: Player;
-  updateGameState: (newGameState: string) => void;
+  updateGameState: (newGameState: string, continueTurn?: boolean) => void;
 }
 
 export const useGameMoves = ({
@@ -198,7 +197,7 @@ export const useGameMoves = ({
       if (moreCaptures) {
         // Update game state but don't change player turn
         const updatedState = newState.join('');
-        updateGameState(updatedState, true); // Added a param to indicate continuing the same turn
+        updateGameState(updatedState, true); // Pass true to indicate continuing the same turn
         setMultipleCapturePiecePosition(to); // Remember which piece must continue capturing
         
         toast({
