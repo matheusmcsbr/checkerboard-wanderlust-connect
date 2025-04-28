@@ -4,7 +4,8 @@ import { Player } from "../hooks/useGameState";
 export const getOpponentUrl = (
   gameState: string,
   currentPlayer: Player,
-  controllingPlayer: Player | null
+  controllingPlayer: Player | null,
+  gameId: string
 ) => {
   // Create a new URL based on the current window location
   const baseUrl = window.location.origin + window.location.pathname;
@@ -19,6 +20,9 @@ export const getOpponentUrl = (
   
   // Set the role for the opponent
   params.set('role', controllingPlayer === 'white' ? 'purple' : 'white');
+  
+  // Include the game ID for synchronization
+  params.set('gameId', gameId);
   
   // Replace the URL search parameters
   url.search = params.toString();
